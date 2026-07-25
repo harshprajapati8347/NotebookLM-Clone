@@ -1,0 +1,115 @@
+// NotebookLM Clone — Prisma schema
+// Source of truth: docs/NotebookLM-Clone-Project-Plan.md §4
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id // Clerk user id
+  email     String     @unique
+  name      String?
+  imageUrl  String?
+  notebooks Notebook[]
+  createdAt DateTime   @default(now())
+}
+
+model Notebook {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  sources      Source[]
+  chatSessions ChatSession[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+enum SourceType {
+  PDF
+  TEXT
+  URL
+  YOUTUBE
+  VTT
+}
+
+enum SourceStatus {
+  UPLOADING
+  QUEUED
+  INDEXING
+  READY
+  FAILED
+}
+
+model Source {
+  id           String       @id @default(cuid())
+  notebookId   String
+  notebook     Notebook     @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  type         SourceType
+  title        String
+  originUrl    String? // for URL/YouTube
+  storagePath  String? // for PDF/text file uploads
+  status       SourceStatus @default(QUEUED)
+  errorMessage String?
+  progress     Int          @default(0)
+  metadata     Json? // e.g. { pageCount, videoDuration, channel }
+  chunks       Chunk[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([notebookId])
+}
+
+model Chunk {
+  id            String   @id @default(cuid())
+  sourceId      String
+  source        Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  notebookId    String // denormalized for fast filtered scroll/debug
+  chunkIndex    Int
+  text          String
+  locator       Json // polymorphic, see docs §4.1
+  tokenCount    Int
+  vectorPointId String   @unique // Qdrant point id (deterministic)
+  createdAt     DateTime @default(now())
+
+  @@index([sourceId])
+  @@index([notebookId])
+}
+
+model ChatSession {
+  id         String        @id @default(cuid())
+  notebookId String
+  notebook   Notebook      @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  messages   ChatMessage[]
+  createdAt  DateTime      @default(now())
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String // "user" | "assistant"
+  content   String
+  citations Json? // Citation[]
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model IngestionJob {
+  id        String   @id
+  sourceId  String
+  status    String // waiting | active | completed | failed
+  progress  Int      @default(0)
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
