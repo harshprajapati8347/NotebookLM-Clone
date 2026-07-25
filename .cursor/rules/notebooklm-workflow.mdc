@@ -1,0 +1,51 @@
+---
+description: Core workflow rules for the NotebookLM Clone build
+alwaysApply: true
+---
+
+1. **Work one phase at a time**, in the order defined in §13 of the plan
+   (Phase 0 → Phase 5). Do not start a phase until I confirm the previous
+   phase's milestone is verified and working.
+
+2. **Context folder**: create a `/context` folder at the project root if it
+   doesn't exist. At the end of each phase, create a file named exactly:
+
+   context/Phase{N}\_{ShortName}.md
+
+   matching this convention:
+   - context/Phase0_Scaffold_Auth_DB_VectorStore.md
+   - context/Phase1_Notebook_Management.md
+   - context/Phase2_Ingestion_Pipeline.md
+   - context/Phase3_RAG_Query_Pipeline.md
+   - context/Phase4_Source_Viewer.md
+   - context/Phase5_Polish_Deploy_Submission.md
+
+3. **Each phase's context file must include:**
+   - **What was built** — short summary of what this phase delivers
+   - **Files created/modified** — list of key paths, with a one-line purpose
+     for each
+   - **Key decisions & deviations** — anything you implemented differently
+     from the plan, and why
+   - **Environment variables added/used** — which ones from §11 this phase
+     needed
+   - **How to verify the milestone** — exact steps to reproduce the
+     phase's ✅ milestone from the plan (commands to run, URLs to hit, what
+     to check in the DB/Qdrant/UI)
+   - **Known issues / TODOs** — anything deferred or incomplete, to carry
+     into a later phase
+   - **What the next phase needs from this one** — any interfaces, types, or
+     setup the next phase will depend on
+
+4. **Before starting any phase**, read all existing files in `/context` first
+   so you have full continuity of decisions made in prior phases, even across
+   separate sessions.
+
+5. If anything in the project plan is ambiguous or you need to make a
+   judgment call not covered by the doc, note the decision in that phase's
+   context file rather than silently choosing — I want a record of every
+   deviation.
+
+6. Use the tech stack, data model, folder structure, and API design exactly
+   as specified in the plan (Next.js 15 App Router, Clerk Google-only auth,
+   Prisma + Postgres, Qdrant, BullMQ + Redis, OpenAI embeddings + generation,
+   Cohere rerank).
