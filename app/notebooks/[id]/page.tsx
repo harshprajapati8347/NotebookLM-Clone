@@ -5,6 +5,7 @@ import { ChatPanel } from "@/components/chat/chat-panel";
 import { SourceViewerPanel } from "@/components/sources/source-viewer-panel";
 import { ensureUserSynced } from "@/lib/auth/sync-user";
 import { getOwnedNotebookSummary } from "@/lib/notebooks/queries";
+import { listSourcesForNotebook } from "@/lib/sources/queries";
 
 export default async function NotebookWorkspacePage({
   params,
@@ -19,11 +20,13 @@ export default async function NotebookWorkspacePage({
     notFound();
   }
 
+  const sources = await listSourcesForNotebook(id);
+
   return (
     <div className="flex flex-1 flex-col">
       <NotebookWorkspaceHeader notebook={notebook} />
       <div className="grid flex-1 grid-cols-1 md:grid-cols-[280px_1fr_300px]">
-        <SourcesPanel />
+        <SourcesPanel notebookId={id} initialSources={sources} />
         <ChatPanel />
         <SourceViewerPanel />
       </div>
