@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/clerk";
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from "@/lib/rateLimit";
 import { extractYoutubeVideoId } from "@/lib/adapters";
 import { UrlAdapter } from "@/lib/adapters/urlAdapter";
 import { parseVttOrSrt } from "@/lib/adapters/vttParser";
-import { readSourceFile } from "@/lib/storage/local";
+import { readSourceFile } from "@/lib/storage";
 import { findOwnedSource } from "@/lib/sources/queries";
 import type { SourceContentPayload } from "@/lib/sources/content";
 
@@ -19,6 +20,16 @@ export async function GET(_request: Request, { params }: RouteParams) {
   const userId = await requireUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(
+    "sourceContent",
+    userId,
+    RATE_LIMITS.sourceContent.limit,
+    RATE_LIMITS.sourceContent.windowSeconds
+  );
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit);
   }
 
   const { id } = await params;

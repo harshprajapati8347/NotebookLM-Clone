@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { streamText } from "ai";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth/clerk";
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from "@/lib/rateLimit";
 import { findOwnedNotebook } from "@/lib/notebooks/queries";
 import {
   appendChatMessage,
@@ -37,6 +38,13 @@ export async function POST(request: Request, { params }: RouteParams) {
   const userId = await requireUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Chat is the most expensive route (embed + rerank + LLM call per message)
+  // so it gets its own tight budget (plan §5/§10).
+  const rateLimit = await checkRateLimit("chat", userId, RATE_LIMITS.chat.limit, RATE_LIMITS.chat.windowSeconds);
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit);
   }
 
   const { id: notebookId } = await params;

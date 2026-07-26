@@ -134,7 +134,7 @@ export function ChatPanel({
   }
 
   return (
-    <div className="flex h-full flex-col border-b md:border-b-0 md:border-r">
+    <div className="flex h-full flex-1 flex-col md:border-r">
       {messages.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-10 text-center">
           <MessageSquare className="size-6 text-muted-foreground" />
@@ -145,7 +145,11 @@ export function ChatPanel({
           </p>
         </div>
       ) : (
-        <ChatMessageList messages={messages} onOpenCitation={onOpenCitation} />
+        <ChatMessageList
+          messages={messages}
+          onOpenCitation={onOpenCitation}
+          onRetry={busy ? undefined : handleSend}
+        />
       )}
       <ChatInput disabled={busy} onSend={handleSend} />
     </div>

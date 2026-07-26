@@ -1,5 +1,5 @@
 import type { Source } from "@prisma/client";
-import { readSourceFile } from "@/lib/storage/local";
+import { readSourceFile } from "@/lib/storage";
 import { mergeCuesByDuration } from "./cueMerge";
 import { parseVttOrSrt } from "./vttParser";
 import { AdapterError, type RawDocument, type RawSegment, type SourceAdapter } from "./types";

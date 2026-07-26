@@ -32,7 +32,7 @@ export function SourcesPanel({
   }
 
   return (
-    <div className="flex h-full flex-col border-b md:border-b-0 md:border-r">
+    <div className="flex h-full flex-1 flex-col md:border-r">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <h2 className="text-sm font-semibold">Sources</h2>
         <Button size="sm" onClick={() => setAddOpen(true)}>

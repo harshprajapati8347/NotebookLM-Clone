@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageContent } from "./message-content";
 import { SourcesUsedList } from "./sources-used-list";
@@ -11,9 +12,11 @@ import type { Citation } from "@/lib/retrieval/types";
 function MessageBubble({
   message,
   onOpenCitation,
+  onRetry,
 }: {
   message: ChatUiMessage;
   onOpenCitation?: (citation: Citation) => void;
+  onRetry?: () => void;
 }) {
   const isUser = message.role === "user";
 
@@ -46,7 +49,20 @@ function MessageBubble({
         )}
 
         {message.status === "error" && (
-          <p className="mt-1 text-xs text-destructive">Something went wrong. Please try again.</p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <p className="text-xs text-destructive">Something went wrong.</p>
+            {onRetry && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={onRetry}
+              >
+                <RotateCcw className="size-3" /> Retry
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -56,9 +72,12 @@ function MessageBubble({
 export function ChatMessageList({
   messages,
   onOpenCitation,
+  onRetry,
 }: {
   messages: ChatUiMessage[];
   onOpenCitation?: (citation: Citation) => void;
+  /** Re-sends the question that preceded a failed assistant message. */
+  onRetry?: (questionText: string) => void;
 }) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -69,9 +88,22 @@ export function ChatMessageList({
   return (
     <ScrollArea className="flex-1">
       <div className="flex flex-col gap-3 p-3">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} onOpenCitation={onOpenCitation} />
-        ))}
+        {messages.map((message, index) => {
+          const precedingUserMessage =
+            message.role === "assistant" && message.status === "error"
+              ? messages[index - 1]
+              : undefined;
+          const canRetry = onRetry && precedingUserMessage?.role === "user";
+
+          return (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              onOpenCitation={onOpenCitation}
+              onRetry={canRetry ? () => onRetry(precedingUserMessage.content) : undefined}
+            />
+          );
+        })}
         <div ref={bottomRef} />
       </div>
     </ScrollArea>

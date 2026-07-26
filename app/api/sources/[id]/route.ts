@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/clerk";
 import { prisma } from "@/lib/db/prisma";
 import { deleteSourcePoints } from "@/lib/qdrant/points";
-import { deleteSourceFiles } from "@/lib/storage/local";
+import { deleteSourceFiles } from "@/lib/storage";
 import { findOwnedSource } from "@/lib/sources/queries";
 
 type RouteParams = { params: Promise<{ id: string }> };

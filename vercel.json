@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app/api/notebooks/[id]/chat/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/sources/[id]/content/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/notebooks/[id]/sources/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}

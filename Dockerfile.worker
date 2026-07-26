@@ -1,0 +1,18 @@
+# Long-running BullMQ ingestion worker (plan §3/§13 Phase 5: "switch the
+# worker to a plain long-lived process for production"). This is a SEPARATE
+# deployable from the Next.js app itself — Vercel's serverless functions
+# cannot run a long-lived process, so the worker needs a host that supports
+# one (Railway, Render, Fly.io, an EC2/VM, etc.). See README > Deployment
+# for how to point this at the same Postgres/Redis/Qdrant the web app uses.
+FROM node:20-alpine AS base
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npx prisma generate
+
+# No `npm run build` needed — the worker runs directly via tsx, it never
+# touches Next.js's build output.
+CMD ["npx", "tsx", "scripts/worker.ts"]

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUserId } from "@/lib/auth/clerk";
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from "@/lib/rateLimit";
 import { prisma } from "@/lib/db/prisma";
 import { findOwnedNotebook } from "@/lib/notebooks/queries";
 import { updateNotebookSchema } from "@/lib/notebooks/validation";
@@ -11,6 +12,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const userId = await requireUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(
+    "notebookMutate",
+    userId,
+    RATE_LIMITS.notebookMutate.limit,
+    RATE_LIMITS.notebookMutate.windowSeconds
+  );
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit);
   }
 
   const { id } = await params;
@@ -61,6 +72,16 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   const userId = await requireUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(
+    "notebookMutate",
+    userId,
+    RATE_LIMITS.notebookMutate.limit,
+    RATE_LIMITS.notebookMutate.windowSeconds
+  );
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit);
   }
 
   const { id } = await params;

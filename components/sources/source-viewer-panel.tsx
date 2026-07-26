@@ -81,7 +81,7 @@ export function SourceViewerPanel({
 
   if (!citation) {
     return (
-      <div className="flex h-full flex-col border-t md:border-t-0 md:border-l">
+      <div className="flex h-full flex-1 flex-col">
         <div className="border-b px-4 py-3">
           <h2 className="text-sm font-semibold">Source viewer</h2>
         </div>
@@ -97,7 +97,7 @@ export function SourceViewerPanel({
   }
 
   return (
-    <div className="flex h-full flex-col border-t md:border-t-0 md:border-l">
+    <div className="flex h-full flex-1 flex-col">
       <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
         <h2 className="line-clamp-1 min-w-0 text-sm font-semibold">{citation.sourceTitle}</h2>
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close source viewer">

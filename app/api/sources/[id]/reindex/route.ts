@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/clerk";
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from "@/lib/rateLimit";
 import { prisma } from "@/lib/db/prisma";
 import { ingestionQueue } from "@/lib/queue/ingestionQueue";
 import { findOwnedSource, serializeSource } from "@/lib/sources/queries";
@@ -11,6 +12,16 @@ export async function POST(_request: Request, { params }: RouteParams) {
   const userId = await requireUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(
+    "sourceReindex",
+    userId,
+    RATE_LIMITS.sourceReindex.limit,
+    RATE_LIMITS.sourceReindex.windowSeconds
+  );
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit);
   }
 
   const { id } = await params;

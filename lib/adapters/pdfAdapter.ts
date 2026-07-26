@@ -1,6 +1,6 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import type { Source } from "@prisma/client";
-import { readSourceFile } from "@/lib/storage/local";
+import { readSourceFile } from "@/lib/storage";
 import { AdapterError, type RawDocument, type RawSegment, type SourceAdapter } from "./types";
 
 /** Per-page text extraction; each page becomes one locator-tagged segment (plan §6). */

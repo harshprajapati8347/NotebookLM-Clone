@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { SourceType } from "@prisma/client";
 import { requireUserId } from "@/lib/auth/clerk";
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from "@/lib/rateLimit";
 import { prisma } from "@/lib/db/prisma";
 import { findOwnedNotebook } from "@/lib/notebooks/queries";
 import { ingestionQueue } from "@/lib/queue/ingestionQueue";
-import { saveSourceFile } from "@/lib/storage/local";
+import { saveSourceFile } from "@/lib/storage";
 import { listSourcesForNotebook, serializeSource } from "@/lib/sources/queries";
 import {
   ACCEPTED_MIME_BY_TYPE,
@@ -148,6 +149,16 @@ export async function POST(request: Request, { params }: RouteParams) {
   const userId = await requireUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(
+    "sourceCreate",
+    userId,
+    RATE_LIMITS.sourceCreate.limit,
+    RATE_LIMITS.sourceCreate.windowSeconds
+  );
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit);
   }
 
   const { id: notebookId } = await params;

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { NotebookWorkspaceHeader } from "@/components/notebook/notebook-workspace-header";
-import { SourcesPanel } from "@/components/sources/sources-panel";
 import { WorkspacePanels } from "@/components/notebook/workspace-panels";
 import { ensureUserSynced } from "@/lib/auth/sync-user";
 import { getOwnedNotebookSummary } from "@/lib/notebooks/queries";
@@ -26,10 +25,10 @@ export default async function NotebookWorkspacePage({
   return (
     <div className="flex flex-1 flex-col">
       <NotebookWorkspaceHeader notebook={notebook} />
-      <div className="grid flex-1 grid-cols-1 md:grid-cols-[280px_1fr_300px]">
-        <SourcesPanel notebookId={id} initialSources={sources} />
+      <div className="flex flex-1 flex-col md:grid md:grid-cols-[280px_1fr_300px] md:overflow-hidden">
         <WorkspacePanels
           notebookId={id}
+          initialSources={sources}
           initialSessionId={chatSession.sessionId}
           initialMessages={chatSession.messages}
         />
