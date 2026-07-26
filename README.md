@@ -5,6 +5,8 @@ different types (PDF, plain text, website URL, YouTube video, VTT/SRT transcript
 questions scoped to a notebook — answers stream in with numbered, click-through citations that
 open the original source at the exact page/paragraph/timestamp they came from.
 
+Live Project URL: [notebooklm.iamharsh.in](https://notebooklm.iamharsh.in)
+
 Demo video: [Google Drive Link](https://drive.google.com/drive/folders/194FvslWTUoxuILORMzarxvsOMtsBS8sK?usp=drive_link)
 
 ## Features
