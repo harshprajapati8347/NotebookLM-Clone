@@ -5,9 +5,7 @@ different types (PDF, plain text, website URL, YouTube video, VTT/SRT transcript
 questions scoped to a notebook — answers stream in with numbered, click-through citations that
 open the original source at the exact page/paragraph/timestamp they came from.
 
-Full spec: [`docs/NotebookLM-Clone-Project-Plan.md`](docs/NotebookLM-Clone-Project-Plan.md).
-Per-phase build log: [`context/`](context/).
-Demo video script: [`docs/Demonstration.md`](docs/Demonstration.md).
+Demo video: [Google Drive Link](https://drive.google.com/drive/folders/194FvslWTUoxuILORMzarxvsOMtsBS8sK?usp=drive_link)
 
 ## Features
 
@@ -72,20 +70,20 @@ citation-validation step.
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Frontend | Next.js 15 (App Router) + shadcn/ui + Tailwind, `next-themes` |
-| Auth | Clerk (Google OAuth only) |
-| ORM / DB | Prisma 6 + Postgres |
-| Queue | BullMQ + Redis (ingestion) / Redis (rate limiting) |
-| Vector DB | Qdrant |
-| LLM | OpenAI (`gpt-5.5` by default) via Vercel AI SDK (`streamText`) |
-| Embeddings | OpenAI `text-embedding-3-small` |
-| Rerank | Cohere Rerank (`rerank-v3.5`), degrades gracefully to vector-score order if unset |
-| PDF | `unpdf` (ingestion) / `react-pdf` (viewer) |
-| Web scraping | Cheerio + `@mozilla/readability` |
-| YouTube | `youtube-transcript` + oEmbed |
-| File storage | Local disk (dev, default) or S3 (prod — set `S3_BUCKET` to switch) |
+| Layer        | Technology                                                                        |
+| ------------ | --------------------------------------------------------------------------------- |
+| Frontend     | Next.js 15 (App Router) + shadcn/ui + Tailwind, `next-themes`                     |
+| Auth         | Clerk (Google OAuth only)                                                         |
+| ORM / DB     | Prisma 6 + Postgres                                                               |
+| Queue        | BullMQ + Redis (ingestion) / Redis (rate limiting)                                |
+| Vector DB    | Qdrant                                                                            |
+| LLM          | OpenAI (`gpt-5.5` by default) via Vercel AI SDK (`streamText`)                    |
+| Embeddings   | OpenAI `text-embedding-3-small`                                                   |
+| Rerank       | Cohere Rerank (`rerank-v3.5`), degrades gracefully to vector-score order if unset |
+| PDF          | `unpdf` (ingestion) / `react-pdf` (viewer)                                        |
+| Web scraping | Cheerio + `@mozilla/readability`                                                  |
+| YouTube      | `youtube-transcript` + oEmbed                                                     |
+| File storage | Local disk (dev, default) or S3 (prod — set `S3_BUCKET` to switch)                |
 
 ## Repository structure
 
@@ -147,18 +145,18 @@ correct answers, and prints a pass/fail table. See
 
 See [`.env.example`](.env.example) for the full annotated list. Summary:
 
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Yes | Clerk app, Google-only sign-in enabled in the dashboard |
-| `CLERK_WEBHOOK_SECRET` | Recommended | Syncs Clerk users into Postgres; the app also defensively upserts on page load if unset |
-| `DATABASE_URL` | Yes | Postgres connection string |
-| `QDRANT_URL`, `QDRANT_API_KEY` | Yes | Qdrant Cloud or self-hosted |
-| `REDIS_URL` | Yes | Used by BullMQ (ingestion queue) and the rate limiter |
-| `OPENAI_API_KEY` | Yes | Embeddings + chat generation |
-| `OPENAI_CHAT_MODEL` | No | Overrides the default `gpt-5.5` |
-| `COHERE_API_KEY` | Recommended | Rerank step; falls back to vector-score order if unset |
+| Variable                                                             | Required                    | Notes                                                                                             |
+| -------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`              | Yes                         | Clerk app, Google-only sign-in enabled in the dashboard                                           |
+| `CLERK_WEBHOOK_SECRET`                                               | Recommended                 | Syncs Clerk users into Postgres; the app also defensively upserts on page load if unset           |
+| `DATABASE_URL`                                                       | Yes                         | Postgres connection string                                                                        |
+| `QDRANT_URL`, `QDRANT_API_KEY`                                       | Yes                         | Qdrant Cloud or self-hosted                                                                       |
+| `REDIS_URL`                                                          | Yes                         | Used by BullMQ (ingestion queue) and the rate limiter                                             |
+| `OPENAI_API_KEY`                                                     | Yes                         | Embeddings + chat generation                                                                      |
+| `OPENAI_CHAT_MODEL`                                                  | No                          | Overrides the default `gpt-5.5`                                                                   |
+| `COHERE_API_KEY`                                                     | Recommended                 | Rerank step; falls back to vector-score order if unset                                            |
 | `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` | Only for serverless deploys | Leave empty to use local disk storage; required on Vercel (ephemeral filesystem) — see Deployment |
-| `NEXT_PUBLIC_APP_URL` | Yes | Base URL, used by a couple of absolute-link cases |
+| `NEXT_PUBLIC_APP_URL`                                                | Yes                         | Base URL, used by a couple of absolute-link cases                                                 |
 
 ## Deployment
 
@@ -183,8 +181,16 @@ one.
      {
        "Version": "2012-10-17",
        "Statement": [
-         { "Effect": "Allow", "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"], "Resource": "arn:aws:s3:::your-bucket-name/*" },
-         { "Effect": "Allow", "Action": "s3:ListBucket", "Resource": "arn:aws:s3:::your-bucket-name" }
+         {
+           "Effect": "Allow",
+           "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+           "Resource": "arn:aws:s3:::your-bucket-name/*"
+         },
+         {
+           "Effect": "Allow",
+           "Action": "s3:ListBucket",
+           "Resource": "arn:aws:s3:::your-bucket-name"
+         }
        ]
      }
      ```
@@ -236,12 +242,12 @@ identical one, since it's the side that writes the files the app later reads).
 serverless invocations, not just per-process). Budgets are per-user, tuned per route in
 `RATE_LIMITS`:
 
-| Route | Limit |
-| --- | --- |
-| `POST /api/notebooks/:id/chat` | 20 / min |
-| `POST /api/notebooks/:id/sources` | 15 / min |
-| `POST /api/sources/:id/reindex` | 10 / min |
-| `GET /api/sources/:id/content` | 60 / min |
+| Route                                                      | Limit       |
+| ---------------------------------------------------------- | ----------- |
+| `POST /api/notebooks/:id/chat`                             | 20 / min    |
+| `POST /api/notebooks/:id/sources`                          | 15 / min    |
+| `POST /api/sources/:id/reindex`                            | 10 / min    |
+| `GET /api/sources/:id/content`                             | 60 / min    |
 | `POST /api/notebooks`, `PATCH`/`DELETE /api/notebooks/:id` | 20–30 / min |
 
 A Redis outage fails **open** (requests are allowed through, logged) rather than taking the whole
