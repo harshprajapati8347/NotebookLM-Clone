@@ -8,9 +8,11 @@ const CITATION_PATTERN = /\[(\d+)\]/g;
 export function MessageContent({
   content,
   citations,
+  onOpenCitation,
 }: {
   content: string;
   citations: Citation[];
+  onOpenCitation?: (citation: Citation) => void;
 }) {
   const citationByIndex = new Map(citations.map((c) => [c.index, c]));
   const parts: React.ReactNode[] = [];
@@ -27,7 +29,7 @@ export function MessageContent({
     if (matchIndex > lastIndex) {
       parts.push(<Fragment key={key++}>{content.slice(lastIndex, matchIndex)}</Fragment>);
     }
-    parts.push(<CitationChip key={key++} citation={citation} />);
+    parts.push(<CitationChip key={key++} citation={citation} onOpen={onOpenCitation} />);
     lastIndex = matchIndex + match[0].length;
   }
 

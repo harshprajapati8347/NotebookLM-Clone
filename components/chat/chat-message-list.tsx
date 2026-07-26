@@ -6,8 +6,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageContent } from "./message-content";
 import { SourcesUsedList } from "./sources-used-list";
 import type { ChatUiMessage } from "./chat-panel";
+import type { Citation } from "@/lib/retrieval/types";
 
-function MessageBubble({ message }: { message: ChatUiMessage }) {
+function MessageBubble({
+  message,
+  onOpenCitation,
+}: {
+  message: ChatUiMessage;
+  onOpenCitation?: (citation: Citation) => void;
+}) {
   const isUser = message.role === "user";
 
   return (
@@ -23,7 +30,11 @@ function MessageBubble({ message }: { message: ChatUiMessage }) {
             Thinking…
           </div>
         ) : (
-          <MessageContent content={message.content} citations={message.citations} />
+          <MessageContent
+            content={message.content}
+            citations={message.citations}
+            onOpenCitation={onOpenCitation}
+          />
         )}
 
         {message.status === "verifying" && (
@@ -31,7 +42,7 @@ function MessageBubble({ message }: { message: ChatUiMessage }) {
         )}
 
         {message.status !== "streaming" && !isUser && (
-          <SourcesUsedList citations={message.citations} />
+          <SourcesUsedList citations={message.citations} onOpenCitation={onOpenCitation} />
         )}
 
         {message.status === "error" && (
@@ -42,7 +53,13 @@ function MessageBubble({ message }: { message: ChatUiMessage }) {
   );
 }
 
-export function ChatMessageList({ messages }: { messages: ChatUiMessage[] }) {
+export function ChatMessageList({
+  messages,
+  onOpenCitation,
+}: {
+  messages: ChatUiMessage[];
+  onOpenCitation?: (citation: Citation) => void;
+}) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -53,7 +70,7 @@ export function ChatMessageList({ messages }: { messages: ChatUiMessage[] }) {
     <ScrollArea className="flex-1">
       <div className="flex flex-col gap-3 p-3">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble key={message.id} message={message} onOpenCitation={onOpenCitation} />
         ))}
         <div ref={bottomRef} />
       </div>

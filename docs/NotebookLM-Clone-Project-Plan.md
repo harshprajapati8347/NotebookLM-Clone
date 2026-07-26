@@ -614,8 +614,8 @@ Six phases, each ending in a concrete, demoable milestone. Give each phase to Cu
 - Small retrieval sanity-check script (a handful of hand-written Q&A pairs per source type, confirm the right chunk/source is retrieved) — cheap way to demonstrate retrieval quality was considered
 - Deploy (Vercel for the app; managed Postgres, Qdrant Cloud, managed Redis)
 - Write README: setup instructions, architecture overview, retrieval flow diagram/explanation, env var list, how to run locally
-- Record demo video: create notebook → ingest all 5 source types → show status indicators → ask questions → show streamed grounded answers with citations → click through citations for each source type → explain key technical decisions
-- ✅ **Milestone:** public GitHub repo, live deployment link, complete README, demo video — all submission-ready.
+- Record demo video (Create a [Demonstration.md](http://Demonstration.md) file inside docs and add short script to create the video around this project): create notebook → ingest all 5 source types → show status indicators → ask questions → show streamed grounded answers with citations → click through citations for each source type → explain key technical decisions
+- ✅ **Milestone:** public GitHub repo, live deployment link, complete README, demo video script — all submission-ready.
 
 ---
 

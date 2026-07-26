@@ -30,10 +30,12 @@ export function ChatPanel({
   notebookId,
   initialSessionId,
   initialMessages,
+  onOpenCitation,
 }: {
   notebookId: string;
   initialSessionId: string;
   initialMessages: ChatMessageSummary[];
+  onOpenCitation?: (citation: Citation) => void;
 }) {
   const [sessionId, setSessionId] = React.useState(initialSessionId);
   const [messages, setMessages] = React.useState<ChatUiMessage[]>(
@@ -143,7 +145,7 @@ export function ChatPanel({
           </p>
         </div>
       ) : (
-        <ChatMessageList messages={messages} />
+        <ChatMessageList messages={messages} onOpenCitation={onOpenCitation} />
       )}
       <ChatInput disabled={busy} onSend={handleSend} />
     </div>
