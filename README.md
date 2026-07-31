@@ -229,6 +229,67 @@ and give it the exact same env vars as the Vercel deployment (it needs `DATABASE
 or the same `S3_*` vars — whichever storage backend the web app is using, the worker must use the
 identical one, since it's the side that writes the files the app later reads).
 
+## My Setup - Worker Deployment on AWS Lightsail
+
+The background worker (BullMQ) processes source ingestion and cannot run on Vercel's serverless functions, since it needs a long-lived process. It's deployed as a Docker container on an AWS Lightsail instance instead.
+
+### Initial Setup
+
+```bash
+# SSH into the instance
+ssh username@your-lightsail-ip
+
+# Install Docker (skip if already installed)
+sudo apt update && sudo apt install -y docker.io
+sudo systemctl enable --now docker
+
+# Clone the repo
+git clone https://github.com/you/notebooklm-clone.git
+cd notebooklm-clone
+
+# Create .env.worker with the worker's required variables
+cat > .env.worker << 'EOF'
+DATABASE_URL=
+QDRANT_URL=
+QDRANT_API_KEY=
+REDIS_URL=
+OPENAI_API_KEY=
+S3_BUCKET=
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_REGION=
+EOF
+
+# Build and run
+sudo docker build -f Dockerfile.worker -t notebooklm-worker .
+sudo docker run -d \
+  --name notebooklm-worker \
+  --restart unless-stopped \
+  --env-file .env.worker \
+  notebooklm-worker
+
+# Verify
+sudo docker logs -f notebooklm-worker
+```
+
+`--restart unless-stopped` ensures the worker survives reboots and crashes automatically.
+
+### Redeploying After Code Changes
+
+```bash
+cd notebooklm-clone
+git pull
+sudo docker build -f Dockerfile.worker -t notebooklm-worker .
+sudo docker stop notebooklm-worker
+sudo docker rm notebooklm-worker
+sudo docker run -d \
+  --name notebooklm-worker \
+  --restart unless-stopped \
+  --env-file .env.worker \
+  notebooklm-worker
+sudo docker logs -f notebooklm-worker
+```
+
 ### 4. Post-deploy checklist
 
 - [ ] `npx prisma migrate deploy` ran against the production `DATABASE_URL`

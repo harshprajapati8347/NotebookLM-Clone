@@ -6,80 +6,83 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 
-// S3-backed file storage for production (plan §5: "Local disk (dev) /
-// S3-compatible bucket (prod)"). Required whenever the app runs on a
-// serverless/ephemeral-filesystem host (e.g. Vercel) — see `lib/storage/index.ts`
-// for how this is selected. Same three-function surface as `local.ts` so
-// callers never know which backend is active.
-
-let client: S3Client | undefined;
+// S3-backed file storage for prod (plan §5: "Local disk (dev) / S3-compatible
+// bucket (prod)"). Same 3-function contract as `./local` — callers only ever
+// deal with an opaque `storagePath` string, never an S3 key/bucket directly.
+const globalForS3 = globalThis as unknown as { s3Client: S3Client | undefined };
 
 function getClient(): S3Client {
-  if (!client) {
-    // Deliberately using our own S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY
-    // names (per plan §11), not the AWS SDK's default AWS_* env vars, so
-    // this app's env file has one unambiguous set of names — pass them
-    // explicitly rather than relying on the SDK's default credential chain.
-    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
-    client = new S3Client({
+  if (!globalForS3.s3Client) {
+    globalForS3.s3Client = new S3Client({
       region: process.env.S3_REGION,
-      ...(accessKeyId && secretAccessKey
-        ? { credentials: { accessKeyId, secretAccessKey } }
-        : {}),
+      credentials: process.env.S3_ACCESS_KEY_ID
+        ? {
+            accessKeyId: process.env.S3_ACCESS_KEY_ID,
+            secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+          }
+        : undefined,
     });
   }
-  return client;
+  return globalForS3.s3Client;
 }
 
 function getBucket(): string {
-  const bucket = process.env.S3_BUCKET?.trim();
-  if (!bucket) {
-    throw new Error("S3_BUCKET is not set");
-  }
+  const bucket = process.env.S3_BUCKET;
+  if (!bucket) throw new Error("S3_BUCKET is not set");
   return bucket;
 }
 
-/** Saves a file under {notebookId}/{sourceId}/{filename}, returns that key as the storagePath. */
+/** Saves a file under {notebookId}/{sourceId}/{filename}, returns the S3 key as the storagePath. */
 export async function saveSourceFile(
   notebookId: string,
   sourceId: string,
   filename: string,
-  data: Buffer
+  data: Buffer,
 ): Promise<string> {
   const key = `${notebookId}/${sourceId}/${filename}`;
   await getClient().send(
-    new PutObjectCommand({
-      Bucket: getBucket(),
-      Key: key,
-      Body: data,
-    })
+    new PutObjectCommand({ Bucket: getBucket(), Key: key, Body: data }),
   );
   return key;
 }
 
 export async function readSourceFile(storagePath: string): Promise<Buffer> {
   const result = await getClient().send(
-    new GetObjectCommand({ Bucket: getBucket(), Key: storagePath })
+    new GetObjectCommand({ Bucket: getBucket(), Key: storagePath }),
   );
   const body = result.Body;
-  if (!body) {
-    throw new Error(`S3 object has no body: ${storagePath}`);
-  }
+  if (!body) throw new Error(`S3 object has no body: ${storagePath}`);
   const bytes = await body.transformToByteArray();
   return Buffer.from(bytes);
 }
 
-export async function deleteSourceFiles(notebookId: string, sourceId: string): Promise<void> {
-  const bucket = getBucket();
+export async function deleteSourceFiles(
+  notebookId: string,
+  sourceId: string,
+): Promise<void> {
   const prefix = `${notebookId}/${sourceId}/`;
-  const list = await getClient().send(
-    new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix })
-  );
-  const objects = (list.Contents ?? []).map((obj) => ({ Key: obj.Key! })).filter((o) => o.Key);
-  if (objects.length === 0) return;
+  const bucket = getBucket();
+  const client = getClient();
 
-  await getClient().send(
-    new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: objects } })
-  );
+  let continuationToken: string | undefined;
+  do {
+    const listed = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
+    const keys = (listed.Contents ?? []).flatMap((obj) =>
+      obj.Key ? [{ Key: obj.Key }] : [],
+    );
+    if (keys.length > 0) {
+      await client.send(
+        new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys } }),
+      );
+    }
+    continuationToken = listed.IsTruncated
+      ? listed.NextContinuationToken
+      : undefined;
+  } while (continuationToken);
 }

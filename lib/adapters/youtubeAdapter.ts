@@ -53,7 +53,7 @@ export class YoutubeAdapter implements SourceAdapter {
 
     let cues;
     try {
-      cues = await fetchTranscript(videoId);
+      cues = await fetchTranscript(videoId, { lang: 'en' });
     } catch (error) {
       if (error instanceof YoutubeTranscriptError) {
         throw new AdapterError(`No captions available for this video: ${error.message}`);
